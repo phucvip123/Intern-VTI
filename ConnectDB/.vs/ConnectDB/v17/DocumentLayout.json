@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Work\\InternVTI\\ConnectDB\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3C9D48F1-A960-4398-AE34-46CD247F1249}|ConnectDB\\ConnectDB.vcxproj|D:\\Work\\InternVTI\\ConnectDB\\ConnectDB\\ConnectDB.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{3C9D48F1-A960-4398-AE34-46CD247F1249}|ConnectDB\\ConnectDB.vcxproj|solutionrelative:ConnectDB\\ConnectDB.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ConnectDB.cpp",
+              "DocumentMoniker": "D:\\Work\\InternVTI\\ConnectDB\\ConnectDB\\ConnectDB.cpp",
+              "RelativeDocumentMoniker": "ConnectDB\\ConnectDB.cpp",
+              "ToolTip": "D:\\Work\\InternVTI\\ConnectDB\\ConnectDB\\ConnectDB.cpp",
+              "RelativeToolTip": "ConnectDB\\ConnectDB.cpp",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-01-14T14:26:07.948Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
