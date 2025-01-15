@@ -1,8 +1,17 @@
 ﻿#include <iostream>
+#include <vector>
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+#include <xlsxwriter.h>
+#include <fstream>
+#define pause system("pause")
+#define cls system("cls")
 
+bool fileExist(std::string filename) {
+    std::ifstream file(filename);
+    return file.good(); // Trả về true nếu file tồn tại
+}
 void checkError(SQLRETURN retCode, SQLHANDLE handle, SQLSMALLINT type) {
     if (retCode != SQL_SUCCESS && retCode != SQL_SUCCESS_WITH_INFO) {
         SQLWCHAR sqlState[1024];
@@ -12,6 +21,76 @@ void checkError(SQLRETURN retCode, SQLHANDLE handle, SQLSMALLINT type) {
         exit(-1);
     }
 }
+void exportDataToExcel(SQLRETURN retCode, SQLHSTMT hStmt, SQLHDBC hDbc,const std::string& filename) {
+
+    // Tạo workbook và worksheet
+    lxw_workbook* workbook = workbook_new(filename.c_str());
+    lxw_worksheet* worksheet = workbook_add_worksheet(workbook, NULL);
+
+    // Tạo định dạng cho tiêu đề (In đậm, nền màu vàng, căn giữa)
+    lxw_format* header_format = workbook_add_format(workbook);
+    format_set_bold(header_format);
+    format_set_bg_color(header_format, LXW_COLOR_YELLOW);
+    format_set_align(header_format, LXW_ALIGN_CENTER);
+
+    // Tạo định dạng cho dữ liệu (Chữ xanh, căn trái)
+    lxw_format* data_format = workbook_add_format(workbook);
+    format_set_font_color(data_format, LXW_COLOR_BLUE);
+    format_set_align(data_format, LXW_ALIGN_LEFT);
+
+    // Viết dữ liệu với định dạng
+    worksheet_write_string(worksheet, 0, 0, "ID", header_format);
+    worksheet_write_string(worksheet, 0, 1, "NAME", header_format);
+    worksheet_write_string(worksheet, 0, 2, "AGE", header_format);
+
+    worksheet_write_string(worksheet, 1, 0, "Data 1", data_format);
+    worksheet_write_string(worksheet, 1, 1, "Data 2", data_format);
+
+    // Tạo định dạng số (2 chữ số thập phân)
+    lxw_format* number_format = workbook_add_format(workbook);
+    format_set_num_format(number_format, "0");
+
+    // Ghi dữ liệu số với định dạng
+    worksheet_write_number(worksheet, 2, 0, 1234.567, number_format);
+    worksheet_write_number(worksheet, 2, 1, 9876.543, number_format);
+
+    // Prepare the query
+    SQLWCHAR query[] = L"SELECT * FROM SinhVien ";
+    retCode = SQLPrepare(hStmt, query, SQL_NTS);
+
+    checkError(retCode, hStmt, SQL_HANDLE_STMT);
+    // Execute the query
+    retCode = SQLExecute(hStmt);
+    checkError(retCode, hStmt, SQL_HANDLE_STMT);
+
+    // Fetch and print results
+    SQLWCHAR name[51];  // Changed from SQLCHAR to SQLWCHAR
+    SQLINTEGER id;
+    SQLINTEGER age;
+    int row = 1;
+    while (SQLFetch(hStmt) == SQL_SUCCESS) {
+        SQLGetData(hStmt, 1, SQL_C_SLONG, &id, 0, nullptr);
+        SQLGetData(hStmt, 2, SQL_C_WCHAR, name, sizeof(name), nullptr);  // Changed to SQL_C_WCHAR
+        SQLGetData(hStmt, 3, SQL_C_SLONG, &age, 0, nullptr);
+        worksheet_write_number(worksheet, row, 0, id, number_format);
+        worksheet_write_number(worksheet, row, 2, age, number_format);
+        int len = wcslen(name) + 1;
+        char* convertName = new char[len];
+
+        size_t converted = 0;  // Số lượng ký tự đã chuyển đổi
+        wcstombs_s(&converted, convertName, len, name, _TRUNCATE);
+        worksheet_write_string(worksheet, row, 1, convertName, data_format);
+        row++;
+    }
+    // Free the statement handle after data fetching
+    retCode = SQLFreeStmt(hStmt, SQL_CLOSE); // Or SQL_UNBIND if you're not closing
+    checkError(retCode, hStmt, SQL_HANDLE_STMT);
+
+    // Đóng workbook
+    workbook_close(workbook);
+    std::cout << "Export Success\n";
+}
+
 void GetData(SQLRETURN retCode, SQLHSTMT hStmt, SQLHDBC hDbc) {
     // Prepare the query
     SQLWCHAR query[] = L"SELECT * FROM SinhVien ";
@@ -37,7 +116,6 @@ void GetData(SQLRETURN retCode, SQLHSTMT hStmt, SQLHDBC hDbc) {
     retCode = SQLFreeStmt(hStmt, SQL_CLOSE); // Or SQL_UNBIND if you're not closing
     checkError(retCode, hStmt, SQL_HANDLE_STMT);
 }
-
 
 void Insert(SQLRETURN retCode, SQLHSTMT hStmt, SQLHDBC hDbc, SQLINTEGER id, SQLWCHAR name[], SQLINTEGER age) {
     SQLWCHAR query[] = L"INSERT INTO SinhVien values(?,?,?);";
@@ -99,6 +177,16 @@ void Delete(SQLRETURN retCode, SQLHSTMT hStmt, SQLHDBC hDbc, SQLINTEGER id) {
         std::wcout << L"Failed to execute DELETE query.\n";
     }
 }
+void printMenu() {
+    std::cout << "Menu" << std::endl;
+    std::cout << "1. Get Data.\n";
+    std::cout << "2. Insert SinhVien\n";
+    std::cout << "3. Update Age\n";
+    std::cout << "4. Delete SinhVien\n";
+    std::cout << "5. Export\n";
+    std::wcout << "6. Thoát.\n";
+    std::cout << "Select: ";
+}
 int main() {
     SQLHENV hEnv;       // Environment handle
     SQLHDBC hDbc;       // Connection handle
@@ -118,7 +206,7 @@ int main() {
     checkError(retCode, hDbc, SQL_HANDLE_DBC);
 
     // Connect to the database
-    SQLWCHAR connStr[] = L"DRIVER={ODBC Driver 17 for SQL Server};SERVER=PHUC\\SQLEXPRESS;DATABASE=SinhVien;Trusted_Connection=Yes;";  // Replace with your DSN
+    SQLWCHAR connStr[] = L"DRIVER={ODBC Driver 17 for SQL Server};SERVER=V000389\\SQLEXPRESS;DATABASE=SinhVien;Trusted_Connection=Yes;";  // Replace with your DSN
     retCode = SQLDriverConnect(hDbc, nullptr, connStr, SQL_NTS, nullptr, 0, nullptr, SQL_DRIVER_COMPLETE);
     checkError(retCode, hDbc, SQL_HANDLE_DBC);
 
@@ -127,12 +215,65 @@ int main() {
     // Allocate statement
     retCode = SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt);
     checkError(retCode, hStmt, SQL_HANDLE_STMT);
-
+    
+    while (true) {
+        bool flag = true;
+        printMenu();
+        int select;
+        std::cin >> select;
+        switch (select) {
+            case 1:
+                cls;
+                GetData(retCode, hStmt, hDbc);
+                std::cout << "\n";
+                break;
+            case 2:
+                cls;
+                SQLINTEGER id, age;
+                SQLWCHAR name[100];
+                std::cout << "ID: ";std::cin >> id;
+                std::cin.ignore();
+                std::cout << "Name: ";std::wcin.getline(name, sizeof(name)/sizeof(SQLWCHAR));
+                std::cout << "Age: ";std::cin >> age;
+                Insert(retCode, hStmt, hDbc, id, name, age);
+                std::cout << "\n";
+                break;
+            case 3:
+                cls;
+                std::cout << "ID: ";std::cin >> id;
+                std::cout << "Age: ";std::cin >> age;
+                Update(retCode, hStmt, hDbc, id, age);
+                std::cout << "\n";
+                break;
+            case 4:
+                cls;
+                std::cout << "ID: ";std::cin >> id;
+                Delete(retCode, hStmt, hDbc, id);
+                std::cout << "\n";
+                break;
+            case 5:
+                exportDataToExcel(retCode, hStmt, hDbc, "output.xlsx");
+                break;
+            case 6:
+                flag = false;
+                break;
+            default:
+                std::wcout << "Không hợp lệ!\n";
+                break;
+        }
+        if (!flag) {
+            cls;
+            std::cout << "Exited\n";
+            break;
+        }
+        pause;
+        cls;
+    }
     // GET DATA SQL
-    GetData(retCode, hStmt, hDbc);
+    //GetData(retCode, hStmt, hDbc);
 
     // Insert data
-    SQLWCHAR name[] = L"Phuc 3";
+    //SQLWCHAR name[] = L"Phuc 3";
     //Insert(retCode, hStmt, hDbc, 3, name, 20);
     //GetData(retCode, hStmt, hDbc);
     
@@ -141,8 +282,8 @@ int main() {
     //GetData(retCode, hStmt, hDbc);
 
     //Delete
-    Delete(retCode, hStmt, hDbc, 3);
-    GetData(retCode, hStmt, hDbc);
+    /*Delete(retCode, hStmt, hDbc, 3);
+    GetData(retCode, hStmt, hDbc);*/
 
     // Cleanup
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);

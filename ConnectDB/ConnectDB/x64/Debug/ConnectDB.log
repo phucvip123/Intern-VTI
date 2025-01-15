@@ -1,2 +1,7 @@
 ﻿  ConnectDB.cpp
-  ConnectDB.vcxproj -> D:\Work\InternVTI\ConnectDB\x64\Debug\ConnectDB.exe
+C:\Users\phuc.nguyenvan\Desktop\Study\InternC\Intern-VTI\ConnectDB\ConnectDB\ConnectDB.cpp(77,17): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\phuc.nguyenvan\Desktop\Study\InternC\Intern-VTI\ConnectDB\ConnectDB\ConnectDB.cpp(261,31): warning C4566: character represented by universal-character-name '\u1EE3' cannot be represented in the current code page (1252)
+C:\Users\phuc.nguyenvan\Desktop\Study\InternC\Intern-VTI\ConnectDB\ConnectDB\ConnectDB.cpp(261,31): warning C4566: character represented by universal-character-name '\u1EC7' cannot be represented in the current code page (1252)
+  ConnectDB.vcxproj -> C:\Users\phuc.nguyenvan\Desktop\Study\InternC\Intern-VTI\ConnectDB\x64\Debug\ConnectDB.exe
+  'pwsh.exe' is not recognized as an internal or external command,
+  operable program or batch file.
